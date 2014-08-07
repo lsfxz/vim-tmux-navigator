@@ -15,10 +15,11 @@ function! s:InTmuxSession()
   return $TMUX != ''
 endfunction
 
-function! s:TmuxPaneCurrentCommand()
-  echo system("tmux display-message -p '#{pane_current_command}'")
+function! s:TmuxPaneShowEnvVar()
+  echom "TMUX_PANE:" $TMUX_PANE
+  echom system("tmux show-env tmux_navigator_bypass_".$TMUX_PANE)
 endfunction
-command! TmuxPaneCurrentCommand call <SID>TmuxPaneCurrentCommand()
+command! TmuxPaneShowEnvVar call <SID>TmuxPaneShowEnvVar()
 
 let s:tmux_is_last_pane = 0
 au WinEnter * let s:tmux_is_last_pane = 0
