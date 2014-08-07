@@ -15,10 +15,11 @@ function! s:InTmuxSession()
   return $TMUX != ''
 endfunction
 
-function! s:TmuxPaneCurrentCommand()
-  echo system("tmux display-message -p '#{pane_current_command}'")
+function! s:TmuxPaneShowEnvVar()
+  echom "TMUX_PANE:" $TMUX_PANE
+  echom system("tmux show-env tmux_navigator_bypass_".$TMUX_PANE)
 endfunction
-command! TmuxPaneCurrentCommand call <SID>TmuxPaneCurrentCommand()
+command! TmuxPaneShowEnvVar call <SID>TmuxPaneShowEnvVar()
 
 let s:tmux_is_last_pane = 0
 au WinEnter * let s:tmux_is_last_pane = 0
@@ -76,11 +77,14 @@ if s:UseTmuxNavigatorMappings()
 endif
 
 " Init: set an environment variable in the tmux session to indicate that this
-" pane is meant to receive keys.
-if len($TMUX_PANE)
-  call system("tmux set-env 'tmux_navigator_bypass_".$TMUX_PANE."' 1")
-  augroup tmux_navigator_leave
-    au!
-    au VimLeave * call system("tmux set-env -u 'tmux_navigator_bypass_".$TMUX_PANE."'")
-  augroup END
-endif
+" pane is meant to receive/handle keys.
+fun! TmuxNavigateInit()
+  if len($TMUX_PANE)
+    call system("tmux set-env 'tmux_navigator_bypass_".$TMUX_PANE."' 1")
+    augroup tmux_navigator_leave
+      au!
+      au VimLeave * call system("tmux set-env -u 'tmux_navigator_bypass_".$TMUX_PANE."'")
+    augroup END
+  endif
+endfun
+call TmuxNavigateInit()
