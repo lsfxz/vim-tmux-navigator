@@ -16,27 +16,18 @@ function! s:TmuxOrTmateExecutable()
 endfunction
 
 function! s:UseTmuxNavigatorMappings()
-  return !get(g:, 'tmux_navigator_no_mappings', 0)
+  return !exists("g:tmux_navigator_no_mappings") || !g:tmux_navigator_no_mappings
 endfunction
 
 function! s:InTmuxSession()
   return $TMUX != ''
 endfunction
 
-function! s:TmuxSocket()
-  " The socket path is the first value in the comma-separated list of $TMUX.
-  return split($TMUX, ',')[0]
+function! s:TmuxPaneShowEnvVar()
+  echom "TMUX_PANE:" $TMUX_PANE
+  echom system("tmux show-env tmux_navigator_bypass_".$TMUX_PANE)
 endfunction
-
-function! s:TmuxCommand(args)
-  let cmd = s:TmuxOrTmateExecutable() . ' -S ' . s:TmuxSocket() . ' ' . a:args
-  return system(cmd)
-endfunction
-
-function! s:TmuxPaneCurrentCommand()
-  echo s:TmuxCommand("display-message -p '#{pane_current_command}'")
-endfunction
-command! TmuxPaneCurrentCommand call s:TmuxPaneCurrentCommand()
+command! TmuxPaneShowEnvVar call <SID>TmuxPaneShowEnvVar()
 
 let s:tmux_is_last_pane = 0
 augroup tmux_navigator
@@ -78,9 +69,9 @@ function! s:TmuxAwareNavigate(direction)
       catch /^Vim\%((\a\+)\)\=:E141/ " catches the no file name error 
       endtry
     endif
-    let args = 'select-pane -t ' . shellescape($TMUX_PANE) . ' -' . tr(a:direction, 'phjkl', 'lLDUR')
-    silent call s:TmuxCommand(args)
-    if s:NeedsVitalityRedraw()
+    let cmd = 'tmux select-pane -' . tr(a:direction, 'phjkl', 'lLDUR')
+    silent call system(cmd)
+    if exists('g:loaded_vitality')
       redraw!
     endif
     let s:tmux_is_last_pane = 1
@@ -97,11 +88,11 @@ function! s:VimNavigate(direction)
   endtry
 endfunction
 
-command! TmuxNavigateLeft call s:TmuxWinCmd('h')
-command! TmuxNavigateDown call s:TmuxWinCmd('j')
-command! TmuxNavigateUp call s:TmuxWinCmd('k')
-command! TmuxNavigateRight call s:TmuxWinCmd('l')
-command! TmuxNavigatePrevious call s:TmuxWinCmd('p')
+command! TmuxNavigateLeft call <SID>TmuxWinCmd('h')
+command! TmuxNavigateDown call <SID>TmuxWinCmd('j')
+command! TmuxNavigateUp call <SID>TmuxWinCmd('k')
+command! TmuxNavigateRight call <SID>TmuxWinCmd('l')
+command! TmuxNavigatePrevious call <SID>TmuxWinCmd('p')
 
 if s:UseTmuxNavigatorMappings()
   nnoremap <silent> <c-h> :TmuxNavigateLeft<cr>
@@ -110,3 +101,16 @@ if s:UseTmuxNavigatorMappings()
   nnoremap <silent> <c-l> :TmuxNavigateRight<cr>
   nnoremap <silent> <c-\> :TmuxNavigatePrevious<cr>
 endif
+
+" Init: set an environment variable in the tmux session to indicate that this
+" pane is meant to receive/handle keys.
+fun! TmuxNavigateInit()
+  if len($TMUX_PANE)
+    call system("tmux set-env 'tmux_navigator_bypass_".$TMUX_PANE."' 1")
+    augroup tmux_navigator_leave
+      au!
+      au VimLeave * call system("tmux set-env -u 'tmux_navigator_bypass_".$TMUX_PANE."'")
+    augroup END
+  endif
+endfun
+call TmuxNavigateInit()
