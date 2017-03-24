@@ -81,7 +81,7 @@ Add the following to your `~/.vimrc` to define your custom maps:
 ``` vim
 let g:tmux_navigator_no_mappings = 1
 
-nnoremap <silent> {Left-mapping} :TmuxNavigateLeft<cr>
+nnoremap <silent> {Left-Mapping} :TmuxNavigateLeft<cr>
 nnoremap <silent> {Down-Mapping} :TmuxNavigateDown<cr>
 nnoremap <silent> {Up-Mapping} :TmuxNavigateUp<cr>
 nnoremap <silent> {Right-Mapping} :TmuxNavigateRight<cr>
@@ -106,6 +106,24 @@ To enable this, add the following (with the desired value) to your ~/.vimrc:
 ```vim
 " Write all buffers before navigating from Vim to tmux pane
 let g:tmux_navigator_save_on_switch = 2
+```
+
+##### Disable While Zoomed
+
+By default, if you zoom the tmux pane running Vim and then attempt to navigate
+"past" the edge of the Vim session, tmux will unzoom the pane. This is the
+default tmux behavior, but may be confusing if you've become accustomed to
+navigation "wrapping" around the sides due to this plugin.
+
+We provide an option, `g:tmux_navigator_disable_when_zoomed`, which can be used
+to disable this unzooming behavior, keeping all navigation within Vim until the
+tmux pane is explicitly unzoomed.
+
+To disable navigation when zoomed, add the following to your ~/.vimrc:
+
+```vim
+" Disable tmux navigator when zooming the Vim pane
+let g:tmux_navigator_disable_when_zoomed = 1
 ```
 
 #### Tmux
