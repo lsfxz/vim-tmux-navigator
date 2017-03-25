@@ -37,6 +37,21 @@ function! s:TmuxPaneShowEnvVar()
 endfunction
 command! TmuxPaneShowEnvVar call <SID>TmuxPaneShowEnvVar()
 
+function! s:TmuxSocket()
+  " The socket path is the first value in the comma-separated list of $TMUX.
+  return split($TMUX, ',')[0]
+endfunction
+
+function! s:TmuxCommand(args)
+  let cmd = s:TmuxOrTmateExecutable() . ' -S ' . s:TmuxSocket() . ' ' . a:args
+  return system(cmd)
+endfunction
+
+function! s:TmuxPaneCurrentCommand()
+  echo s:TmuxCommand("display-message -p '#{pane_current_command}'")
+endfunction
+command! TmuxPaneCurrentCommand call s:TmuxPaneCurrentCommand()
+
 let s:tmux_is_last_pane = 0
 augroup tmux_navigator
   au!
